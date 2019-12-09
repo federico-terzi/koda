@@ -1,5 +1,6 @@
 numpy
-opencv-python==3.4.2.17
-opencv-contrib-python==3.4.2.17
-#matplotlib
+opencv-python==3.4.2.16
+opencv-contrib-python==3.4.2.16
+matplotlib
 jupyter
+tesserocr
