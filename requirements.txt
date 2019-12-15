@@ -4,3 +4,4 @@ opencv-contrib-python==3.4.2.16
 matplotlib
 jupyter
 tesserocr
+imutils
