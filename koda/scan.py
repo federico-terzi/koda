@@ -5,7 +5,7 @@ from collections import defaultdict
 import itertools
 from scipy.signal import argrelextrema
 
-def detect_corners(edges, threshold, lines_limit=12):
+def detect_corners(edges, threshold, lines_limit=12, hough_res=(1, np.pi/180)):
     """
     Given a single-channel image representing the edges, compute HoughLines and find the intersection
     between lines of differente angles. Try all possible combinations of quadrilaters given
@@ -15,9 +15,10 @@ def detect_corners(edges, threshold, lines_limit=12):
     :param edges: Single-channel image
     :param threshold: Threshold used for Hough lines
     :param lines_limit: If more than lines_limit lines are found raise an error. Used to avoid extremely heavy computation due to 4 vertices polygon combinations.
+    :param hough_resolution: Resolution of the Hough transformation as a tuple (rho pixel res, theta degree res)
     :returns: A tuple containing 2 values: numpy array of corners and bi-dimensional list of segmented lines
     """
-    lines = cv2.HoughLines(edges, 1, np.pi/180.0, threshold)
+    lines = cv2.HoughLines(edges, *hough_res, threshold)
     if lines is None:
         return None
     lines = lines.squeeze(axis=1)
