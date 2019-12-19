@@ -6,6 +6,7 @@ import itertools
 from scipy.signal import argrelextrema
 from abc import ABC, abstractmethod
 import time
+from koda.edge.network import UNetEdgeDetector
 
 class CornersDetector(ABC):
 
@@ -29,11 +30,15 @@ class CornersDetectorByEdges(CornersDetector):
         self.start_ns = None
         self.timeout_ns = timeout_ns
         self.timed_out = False
+        self.edge_detector = UNetEdgeDetector()
+        self.edge_detector.load_model('unet-70.h5')
 
     def find_corners(self, img, iterations=3):
         self.timed_out = False
         self.start_ns = time.time_ns()
-        # TODO edge detection API call
+
+        # Detect edge
+        img = self.edge_detector.evaluate(img)
 
         # Cleanup spourius pixel from edge detection model
         img[img < self.noise_threshold] = 0
