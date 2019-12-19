@@ -5,6 +5,8 @@ from keras.models import *
 from keras.layers import *
 from keras.optimizers import *
 
+from .base import EdgeDetector
+
 # Size of the edge mask matrix
 TARGET_IMAGE_SIZE = 256
 
@@ -77,6 +79,7 @@ class UNetEdgeDetector(EdgeDetector):
         """
         Evaluate the given image, extracting the edges and returning a 256x256 mask of them.
         """
+        assert self.is_model_loaded
         
         # Resize the image to the standard 256x256 input size
         resized_image = cv2.resize(image, (TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE))
