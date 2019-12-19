@@ -25,15 +25,19 @@ def detect_corners(edges, threshold, lines_limit=12, hough_res=(1, np.pi/180)):
 
     # Avoid too much intersections heavy computation
     if lines.shape[0] > lines_limit:
-        raise ValueError("Too much lines. Limit is %d" % lines_limit)
+        raise LinesLimitExceeded("Too much lines. Limit is %d" % lines_limit)
 
     # Differentiate lines in two clusters (horizontal and vertical)
     lines_groups = cluster_lines(lines)
     intersec = np.array(intersec_between_groups(lines_groups), dtype=np.int32).squeeze(axis=1)
 
     # Differentiate corners in four clusters (top-left, top-right, bottom-right, bottom-left)
+    k = 4
+    if (len(intersec) < k):
+        raise IntersecPartitioningFail("Cannot parition less than %d intersections" % k)
+
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    _, labels, _ = cv2.kmeans(np.array(intersec, dtype=np.float32), 4, None, criteria, 10, 
+    _, labels, _ = cv2.kmeans(np.array(intersec, dtype=np.float32), k, None, criteria, 10, 
             cv2.KMEANS_RANDOM_CENTERS)
     labels = labels.reshape(-1)
     cluster = (intersec[labels == 0], intersec[labels == 1], intersec[labels == 2], intersec[labels == 3])
@@ -111,3 +115,11 @@ def intersec_between_groups(lines):
             intersections.append(intersection(l1, l2))
 
     return intersections
+
+class LinesLimitExceeded(RuntimeError):
+    def __init__(self, message):
+        super().__init__(message)
+
+class IntersecPartitioningFail(RuntimeError):
+    def __init__(self, message):
+        super().__init__(message)
