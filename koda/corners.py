@@ -6,7 +6,7 @@ import itertools
 from scipy.signal import argrelextrema
 from abc import ABC, abstractmethod
 import time
-from koda.edge.network import UNetEdgeDetector
+from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
 
 class CornersDetector(ABC):
 
@@ -22,23 +22,33 @@ class CornersNotFound(RuntimeError):
             super().__init__(message)
 
 class CornersDetectorByEdges(CornersDetector):
-    def __init__(self, timeout_ns=800*(10**6)):
+    def __init__(self, timeout_ms=800):
         super().__init__()
         self.noise_threshold = 80
         self.hough_threshold = 60
         self.hough_resolution = (1, np.pi/36)
         self.start_ns = None
-        self.timeout_ns = timeout_ns
+        self.timeout_ms = timeout_ms
         self.timed_out = False
         self.edge_detector = UNetEdgeDetector()
         self.edge_detector.load_model('koda/unet-70.h5')
 
+    def scale_corner(self, target_x, target_y, target_width, target_height, original_width, original_height):
+        original_x = original_width * target_x / target_width
+        original_y = original_height * target_y / target_height
+        return (int(original_x), int(original_y))
+
+    def millis(self):
+        return int(round(time.time() * 1000))
+
     def find_corners(self, img, iterations=3):
         self.timed_out = False
-        self.start_ns = time.time_ns()
+        self.start_ms = self.millis()
+
+        h, w = img.shape[:-1]
 
         # Detect edge
-        img = self.edge_detector.evaluate(img)
+        img = self.edge_detector.evaluate(img).astype(np.uint8)
 
         # Cleanup spourius pixel from edge detection model
         img[img < self.noise_threshold] = 0
@@ -58,7 +68,7 @@ class CornersDetectorByEdges(CornersDetector):
         if e is not None:
             raise e
 
-        return corners
+        return np.array([self.scale_corner(*c, TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE, w, h) for c in corners])
 
     def detect_corners(self, edges, threshold, hough_res=(1, np.pi/180)):
         """
@@ -75,7 +85,7 @@ class CornersDetectorByEdges(CornersDetector):
         """
         lines = cv2.HoughLines(edges, *hough_res, threshold)
         if lines is None:
-            return None
+            raise CornersNotFound("No Hough lines were found")
         lines = lines.squeeze(axis=1)
 
         # Differentiate lines in two clusters (horizontal and vertical)
@@ -101,7 +111,7 @@ class CornersDetectorByEdges(CornersDetector):
             cv2.polylines(polys, [np.array(v)], True, 255)
             mask = polys[edges > 0] # Assume as input edges any values greater than 0
             scores.append(np.sum(mask))
-            if time.time_ns() - self.start_ns >= self.timeout_ns:
+            if self.millis() - self.start_ms >= self.timeout_ms:
                 self.timed_out = True
                 break
 
