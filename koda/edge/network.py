@@ -92,7 +92,10 @@ class UNetEdgeDetector(EdgeDetector):
 
         # Feed the model and reshape the given result
         predicted_mask = self.model.predict(input_image).reshape(TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE)
+        
+        # Convert the map to uint8 type and change range to 0-255
+        uint_mask = (predicted_mask * (255/np.max(predicted_mask))).astype("uint8")
 
-        return predicted_mask
+        return uint_mask
 
         
