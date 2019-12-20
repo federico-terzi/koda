@@ -20,12 +20,5 @@ docker build -t koda -f Dockerfile-no-copy .
 Run image mounting current directory to /usr/src/app/koda
 
 ```
-docker run --mount type=bind,source="$(pwd)",target=/usr/src/app/koda -p 8888:8888 -it koda
+docker run --mount type=bind,source="$(pwd)",target=/usr/src/app -p 8888:8888 -it koda
 ```
-
-Enter the container via shell
-
-```
-docker exec -it $(docker ps | grep koda | cut -d ' ' -f1) /bin/bash
-```
-

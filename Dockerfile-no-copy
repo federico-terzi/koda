@@ -12,7 +12,6 @@ RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 COPY ./requirements.txt .
 RUN python -m pip install -r requirements.txt
-RUN apt-get update && apt-get install -y vim
 
 ENV PYTHONUNBUFFERED 1
     

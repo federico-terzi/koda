@@ -31,7 +31,7 @@ class CornersDetectorByEdges(CornersDetector):
         self.timeout_ns = timeout_ns
         self.timed_out = False
         self.edge_detector = UNetEdgeDetector()
-        self.edge_detector.load_model('unet-70.h5')
+        self.edge_detector.load_model('koda/unet-70.h5')
 
     def find_corners(self, img, iterations=3):
         self.timed_out = False
