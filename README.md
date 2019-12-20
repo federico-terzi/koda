@@ -1,5 +1,4 @@
 ```
-```
 sudo docker build -t koda .
 ```
 
