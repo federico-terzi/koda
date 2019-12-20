@@ -7,22 +7,46 @@ from scipy.signal import argrelextrema
 from abc import ABC, abstractmethod
 import time
 from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
+from .utilslines import *
 
 class CornersDetector(ABC):
+    """
+    Abstrct class for corners detector of a document in an image
+    """
 
     @abstractmethod
     def find_corners(self, img, iterations=3):
         """
-        #TODO
+        Find a document in the given image and returns its four corners.
+        :param img: A three-channel image
+        :param iterations: Number of tries to find the corners adjusting params for each iteration
+        :returns: A numpy 2D array representing coordinate of the corners
         """
         pass
 
 class CornersNotFound(RuntimeError):
-        def __init__(self, message):
-            super().__init__(message)
+    """
+    Corners were not found in the image. Cause specified in the error message.
+    """
+    def __init__(self, message):
+        super().__init__(message)
+
+def millis():
+    return int(round(time.time() * 1000))
 
 class CornersDetectorByEdges(CornersDetector):
+    """
+    Rely on a U-Net network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
+    Return the best corners found maximizing the quadrilater perimeter over the edges.
+
+    Useful properties
+    - timed_out: False if the found corners are optimal, True if the maximizing process was stopped by the timeout
+    - hough_lines: Get the Hough lines found and used to compute the intersections (corners candidates)
+    """
     def __init__(self, timeout_ms=800):
+        """
+        :param timeout_ms: Timeout specified in milliseconds after which the maximization stops
+        """
         super().__init__()
         self.noise_threshold = 80
         self.hough_threshold = 60
@@ -32,18 +56,30 @@ class CornersDetectorByEdges(CornersDetector):
         self.timed_out = False
         self.edge_detector = UNetEdgeDetector()
         self.edge_detector.load_model('koda/unet-70.h5')
+        self.hough_lines = None
 
     def scale_corner(self, target_x, target_y, target_width, target_height, original_width, original_height):
+        """
+        Linear transform the given corner (target_x, target_y) found in an image of size (target_width, target_height)
+        to match the corresponding point in the original image of size (original_width, original_height)
+        """
+
         original_x = original_width * target_x / target_width
         original_y = original_height * target_y / target_height
         return (int(original_x), int(original_y))
 
-    def millis(self):
-        return int(round(time.time() * 1000))
-
     def find_corners(self, img, iterations=3):
+        """
+        Iteratively detect corners and adjust parameters if None corners were found.
+        For corner detection detail see self.detect_corners
+
+        :param img: Input three-channel image
+        :param iterations: Number of tries to find corners
+        :returns: numpy 2D array representing the corners coordinates
+        """
+        self.hough_lines = None
         self.timed_out = False
-        self.start_ms = self.millis()
+        self.start_ms = millis()
 
         h, w = img.shape[:-1]
 
@@ -58,6 +94,7 @@ class CornersDetectorByEdges(CornersDetector):
         for _ in range(iterations + 1):
             try:
                 corners, lines = self.detect_corners(img, self.hough_threshold, hough_res=self.hough_resolution)
+                self.hough_lines = lines
             except CornersNotFound as e1:
                 # Too few line, try to decrease threshold
                 self.hough_threshold = int(self.hough_threshold - (self.hough_threshold*0.1))
@@ -89,8 +126,8 @@ class CornersDetectorByEdges(CornersDetector):
         lines = lines.squeeze(axis=1)
 
         # Differentiate lines in two clusters (horizontal and vertical)
-        lines_groups = self.cluster_lines(lines)
-        intersec = np.array(self.intersec_between_groups(lines_groups), dtype=np.int32).squeeze(axis=1)
+        lines_groups = cluster_lines(lines)
+        intersec = np.array(intersec_between_groups(lines_groups), dtype=np.int32).squeeze(axis=1)
 
         # Differentiate corners in four clusters (top-left, top-right, bottom-right, bottom-left)
         k = 4
@@ -111,72 +148,10 @@ class CornersDetectorByEdges(CornersDetector):
             cv2.polylines(polys, [np.array(v)], True, 255)
             mask = polys[edges > 0] # Assume as input edges any values greater than 0
             scores.append(np.sum(mask))
-            if self.millis() - self.start_ms >= self.timeout_ms:
+            if millis() - self.start_ms >= self.timeout_ms:
                 self.timed_out = True
                 break
 
         # Use as best corners the vertices of the polygon with the best score
         best = np.argmax(scores)
         return (np.array(comb[best]), lines_groups)
-
-    def cluster_lines(self, lines):
-        """
-        Given a list of lines (start point, end point) seperate it into two list, 
-        differentiating based on angle
-        """
-
-        # Define criteria = (type, max_iter, epsilon)
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-        flags = cv2.KMEANS_RANDOM_CENTERS
-        attempts = 10
-        k = 2
-
-        # returns angles in [0, pi] in radians
-        angles = np.array([theta for rho, theta in lines])
-
-        # multiply the angles by two and find coordinates of that angle
-        pts = np.array([[np.cos(2*angle), np.sin(2*angle)]
-                        for angle in angles], dtype=np.float32)
-
-        # run kmeans on the coords
-        labels, centers = cv2.kmeans(pts, k, None, criteria, attempts, flags)[1:]
-        labels = labels.reshape(-1)  # transpose to row vec
-
-        # segment lines based on their kmeans label
-        segmented = defaultdict(list)
-        for i, line in zip(range(len(lines)), lines):
-            segmented[labels[i]].append(line)
-        segmented = list(segmented.values())
-        return segmented
-
-    def intersec_between_groups(self, lines):
-        """
-        Compute intersection between two groups of lines
-        :param lines: 2D list representing two groups of lines
-        :returns : list of all the intersections
-        """
-        intersections = []
-        for l1 in lines[0]:
-            for l2 in lines[1]:
-                intersections.append(self.intersection(l1, l2))
-
-        return intersections
-
-    def intersection(self, line1, line2):
-        """
-        Finds the intersection of two lines given in Hesse normal form.
-
-        Returns closest integer pixel locations.
-        See https://stackoverflow.com/a/383527/5087436
-        """
-        rho1, theta1 = line1
-        rho2, theta2 = line2
-        A = np.array([
-            [np.cos(theta1), np.sin(theta1)],
-            [np.cos(theta2), np.sin(theta2)]
-        ])
-        b = np.array([[rho1], [rho2]])
-        x0, y0 = np.linalg.solve(A, b)
-        x0, y0 = int(np.round(x0)), int(np.round(y0))
-        return [[x0, y0]]
-
