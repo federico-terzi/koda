@@ -41,9 +41,10 @@ class CornersDetectorByEdges(CornersDetector):
 
     Useful properties
     - timed_out: False if the found corners are optimal, True if the maximizing process was stopped by the timeout
-    - hough_lines: Get the Hough lines found and used to compute the intersections (corners candidates)
+    - hough_lines: Get the Hough lines grouped by angle referred to edges_img (note: img is heavily resized)
+    - edges_img: Grayscale resized image of the detected edges
     """
-    def __init__(self, timeout_ms=800):
+    def __init__(self, timeout_ms=1000):
         """
         :param timeout_ms: Timeout specified in milliseconds after which the maximization stops
         """
@@ -57,6 +58,7 @@ class CornersDetectorByEdges(CornersDetector):
         self.edge_detector = UNetEdgeDetector()
         self.edge_detector.load_model('koda/unet-70.h5')
         self.hough_lines = None
+        self.edges_img = None
 
     def scale_corner(self, target_x, target_y, target_width, target_height, original_width, original_height):
         """
@@ -85,6 +87,7 @@ class CornersDetectorByEdges(CornersDetector):
 
         # Detect edge
         img = self.edge_detector.evaluate(img).astype(np.uint8)
+        self.edges_img = img
 
         # Cleanup spourius pixel from edge detection model
         img[img < self.noise_threshold] = 0
