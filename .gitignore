@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# VIM
+*.swp
+
+# UNet model
+*.h5
