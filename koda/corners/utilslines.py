@@ -1,12 +1,7 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 from collections import defaultdict
-import itertools
-from scipy.signal import argrelextrema
-from abc import ABC, abstractmethod
-import time
-from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
+import math
 
 def cluster_lines(lines):
     """
@@ -65,7 +60,19 @@ def intersection(line1, line2):
         [np.cos(theta2), np.sin(theta2)]
     ])
     b = np.array([[rho1], [rho2]])
-    x0, y0 = np.linalg.solve(A, b)
+    
+    try:
+        x0, y0 = np.linalg.solve(A, b)
+    except Exception: # Singular matrix error
+        x0, y0 = np.linalg.lstsq(A, b)[0]
     x0, y0 = int(np.round(x0)), int(np.round(y0))
-    return [[x0, y0]]
+    return [x0, y0]
 
+def polar_to_carthesian(rho, theta, distance_factor):
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + distance_factor*(-b)), int(y0 + distance_factor*(a)))
+    pt2 = (int(x0 - distance_factor*(-b)), int(y0 - distance_factor*(a)))
+    return [pt1, pt2]
