@@ -50,14 +50,14 @@ class CornersDetectorByEdges(CornersDetector):
         :param timeout_ms: Timeout specified in milliseconds after which the maximization stops
         """
         super().__init__()
+        self.edge_detector = UNetEdgeDetector()
+        self.edge_detector.load_model('koda/unet-70.h5')
         self.noise_threshold = 80
         self.hough_threshold = 180
         self.hough_resolution = (2, np.pi/90)
         self.start_ns = None
         self.timeout_ms = timeout_ms
         self.timed_out = False
-        self.edge_detector = UNetEdgeDetector()
-        self.edge_detector.load_model('koda/unet-70.h5')
         self.hough_lines = None
         self.edges_img = None
 
@@ -87,9 +87,7 @@ class CornersDetectorByEdges(CornersDetector):
         h, w = img.shape[:-1]
 
         # Detect edge
-        print(millis() - self.start_ms)
-        img = self.edge_detector.evaluate(img).astype(np.uint8)
-        print(millis() - self.start_ms)
+        img = self.edge_detector.evaluate(img)
         img[img < self.noise_threshold] = 0
 
         self.edges_img = img
@@ -99,6 +97,7 @@ class CornersDetectorByEdges(CornersDetector):
         for _ in range(iterations + 1):
             try:
                 corners, lines = self.detect_corners(img, self.hough_threshold, hough_res=self.hough_resolution)
+                self.hough_lines = lines
             except CornersNotFound as e1:
                 # Too few line, try to decrease threshold
                 self.hough_threshold = int(self.hough_threshold - (self.hough_threshold*0.1))
@@ -124,12 +123,10 @@ class CornersDetectorByEdges(CornersDetector):
         :param hough_resolution: Resolution of the Hough transformation as a tuple (rho pixel res, theta degree res)
         :returns: A tuple containing 2 values: numpy array of corners and bi-dimensional list of segmented lines
         """
-        print(millis() - self.start_ms)
         lines = cv2.HoughLines(edges, *hough_res, threshold)
         if lines is None:
             raise CornersNotFound("No Hough lines were found")
         lines = lines.squeeze(axis=1)
-        print(millis() - self.start_ms)
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
         flags = cv2.KMEANS_RANDOM_CENTERS
@@ -139,21 +136,18 @@ class CornersDetectorByEdges(CornersDetector):
         labels, centers = cv2.kmeans(pts, k, None, criteria, attempts, flags)[1:]
         labels = labels.reshape(-1)  # transpose to row vec`
         lines_groups = [lines[labels == label] for label in np.unique(labels)]
-        self.hough_lines = lines_groups
-        print(millis() - self.start_ms)
+
         best_lines = []
         for cluster in lines_groups:
             scores = []
             for rho, theta in cluster:
                 line = np.zeros(edges.shape)
-                pt1, pt2 = polar_to_carthesian(rho, theta, 1000)
+                pt1, pt2 = polar_to_carthesian(rho, theta, TARGET_IMAGE_SIZE)
                 cv2.line(line, pt1, pt2, (255,255,255), 1, cv2.LINE_AA)
                 mask = line[edges>0]
                 scores.append(np.sum(mask))
             best_lines.append(cluster[np.argmax(scores)])
         corners = [intersection(best_lines[i], best_lines[(i+1) % 4]) for i in range(0, len(best_lines))]
-
-        print(millis() - self.start_ms)
         """
         # Differentiate lines in two clusters (horizontal and vertical)
         lines_groups = cluster_lines(lines)
