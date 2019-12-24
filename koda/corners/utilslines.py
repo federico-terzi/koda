@@ -8,6 +8,25 @@ from abc import ABC, abstractmethod
 import time
 from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
 
+def cluster_points_quadrants(pts, img_shape):
+    hor_sep = img_shape[0] // 2
+    ver_sep = img_shape[1] // 2
+    l = [list() for _ in range(4)]
+    for p in pts:
+        x, y = p
+        if (x < hor_sep):
+            if (y < ver_sep):
+                l[0].append(p)
+            else:
+                l[1].append(p)
+        else:
+            if (y < ver_sep):
+                l[2].append(p)
+            else:
+                l[3].append(p)
+    return [item for sublist in l for item in sublist]
+
+
 def cluster_lines(lines):
     """
     Given a list of lines (start point, end point) seperate it into two list, 

@@ -44,7 +44,7 @@ class CornersDetectorByEdges(CornersDetector):
     - hough_lines: Get the Hough lines grouped by angle referred to edges_img (note: img is heavily resized)
     - edges_img: Grayscale resized image of the detected edges
     """
-    def __init__(self, timeout_ms=1000):
+    def __init__(self, timeout_ms=5000):
         """
         :param timeout_ms: Timeout specified in milliseconds after which the maximization stops
         """
@@ -107,6 +107,8 @@ class CornersDetectorByEdges(CornersDetector):
 
         if e is not None:
             raise e
+
+        corners = cluster_points_quadrants(corners, (TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE))
 
         return np.array([self.scale_corner(*c, TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE, w, h) for c in corners])
 
