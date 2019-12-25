@@ -1,12 +1,6 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 from collections import defaultdict
-import itertools
-from scipy.signal import argrelextrema
-from abc import ABC, abstractmethod
-import time
-from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
 
 def cluster_points_quadrants(pts, img_shape):
     hor_sep = img_shape[0] // 2
