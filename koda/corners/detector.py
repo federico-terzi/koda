@@ -7,7 +7,7 @@ from scipy.signal import argrelextrema
 from abc import ABC, abstractmethod
 import time
 from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
-from .utilslines import *
+from .utils import *
 
 class CornersDetector(ABC):
     """
