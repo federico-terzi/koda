@@ -1,6 +1,8 @@
 import cv2
 import numpy
 from PIL import Image
+import locale
+locale.setlocale(locale.LC_ALL, 'C') # https://github.com/sirfz/tesserocr/issues/165
 from tesserocr import PyTessBaseAPI, RIL, PSM
 
 from .base import OCREngine
