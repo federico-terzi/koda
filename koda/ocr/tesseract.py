@@ -3,9 +3,11 @@ import numpy
 from PIL import Image
 import locale
 locale.setlocale(locale.LC_ALL, 'C') # https://github.com/sirfz/tesserocr/issues/165
-from tesserocr import PyTessBaseAPI, RIL, PSM
+from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level
 
 from .base import OCREngine
+
+MIN_CONFIDENCE = 60  # Minimum accepted confidence for words
 
 class TesseractOCREngine(OCREngine):
     """
@@ -30,18 +32,20 @@ class TesseractOCREngine(OCREngine):
         # Open the Tesseract context, specifiying SPARSE_TEXT as an option (used to highlight 
         # single words, rather than lines of text )
         with PyTessBaseAPI(psm=PSM.SPARSE_TEXT) as api:
+            api.SetVariable("save_blob_choices", "T")
             api.SetImage(pillow_img)
-            boxes = api.GetComponentImages(RIL.WORD, True)
+            api.Recognize()
             
-            # Cycle through the boxes, populating the list
-            for i, (im, box, _, _) in enumerate(boxes):
-                api.SetRectangle(box['x'], box['y'], box['w'], box['h'])
-                ocrResult = api.GetUTF8Text()
-                
-                # Calculate the other bounding box coordinates
-                x2, y2 = box['x']+box['w'], box['y']+box['h']
+            ri = api.GetIterator()
+            level = RIL.WORD
 
-                entry = (ocrResult, box['x'], box['y'], x2, y2)
-                output.append(entry)
+             # Cycle through the words, populating the list
+            for r in iterate_level(ri, level):
+                word = r.GetUTF8Text(level)
+                conf = r.Confidence(level)
+                box = r.BoundingBox(level)
+                if word and conf > MIN_CONFIDENCE:
+                    entry = (word, box[0], box[1], box[2], box[3], conf)
+                    output.append(entry)
         
         return output

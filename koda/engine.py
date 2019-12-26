@@ -15,7 +15,7 @@ class Document:
     def findWord(self, word):
         res = self.img.copy()
         for w in self.words:
-            if (w[0] == word+'\n'):
+            if (word.lower() in w[0].lower()):
                 cv2.rectangle(res, (w[1], w[2]), (w[3], w[4]), (255,0,0), 2)
         return res
 
