@@ -40,14 +40,10 @@ class DetectionEngine:
         warped = corners_warp(img, corners)
         pipeline.next(warped, label='warp')
 
-        # Color correction
-        gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-        color_corrected = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-        pipeline.next(color_corrected, label='color_correction')
-
         # Extract text
         try:
             words = self.ocr.extract_text(warped)
         except Exception:
             words = []
+
         return (Document(warped, words), pipeline.imgs)

@@ -4,7 +4,7 @@ import numpy as np
 
 class Pipeline:
     def __init__(self):
-        self.steps = ['edges','hough_lines','corners','warp','color_correction']
+        self.steps = ['edges','hough_lines','corners','warp']
         self.imgs = dict()
         self.i = -1
 
