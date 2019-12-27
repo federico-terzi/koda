@@ -46,7 +46,7 @@ class CornersDetectorByEdges(CornersDetector):
         super().__init__()
         self.noise_threshold = 80
         self.hough_threshold = 60
-        self.hough_resolution = (1, np.pi/36)
+        self.hough_resolution = (1, np.pi/180)
         self.edge_detector = UNetEdgeDetector()
         self.edge_detector.load_model('koda/unet-70.h5')
         self.hough_lines = None
