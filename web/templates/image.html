@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+
+<img src="/api/get_image?id={{iid}}&type=highlight&t={{range(1, 51) | random}}" class="img-fluid"/>
+
+{% endblock %}

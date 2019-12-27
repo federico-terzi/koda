@@ -6,8 +6,11 @@ import itertools
 from scipy.signal import argrelextrema
 from abc import ABC, abstractmethod
 import time
+import os
 from koda.edge.network import UNetEdgeDetector, TARGET_IMAGE_SIZE
 from .utils import *
+
+MODEL_PATH = os.getenv('KODA_MODEL_PATH', "koda/unet-70.h5")
 
 class CornersDetector(ABC):
     """
@@ -48,7 +51,7 @@ class CornersDetectorByEdges(CornersDetector):
         self.hough_threshold = 60
         self.hough_resolution = (1, np.pi/36)
         self.edge_detector = UNetEdgeDetector()
-        self.edge_detector.load_model('koda/unet-70.h5')
+        self.edge_detector.load_model(MODEL_PATH)
         self.hough_lines = None
         self.edges_img = None
 

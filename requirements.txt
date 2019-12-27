@@ -8,3 +8,4 @@ imutils
 keras
 tensorflow
 Pillow
+flask

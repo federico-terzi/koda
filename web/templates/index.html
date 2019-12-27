@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div >
+  <form action="/api/process" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="wordInput">Search word:</label>
+      <input type="input" class="form-control" id="wordInput" name="word">
+    </div>
+    <div class="form-group">
+      <label for="imageInput">Image</label>
+      <input type="file" class="form-control" id="file" name="file">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+<div class="list-group mt-5">
+  {% for image in images %}
+  <a href="/image?id={{image.id}}" class="list-group-item list-group-item-action">
+    <div class="media">
+      <img src="{{image.src}}" class="mr-3 img-thumbnail">
+      <div class="media-body">
+        <h5 class="mt-0">{{image.id}}</h5>
+      </div>
+    </div>
+  </a>
+  {% else %}
+    <h3>No images yet.</h3>
+  {% endfor %}
+  
+</div>
+{% endblock %}
+{% block script %}
+<script>
+
+var previousCount = {{images|length}};
+
+window.setInterval(function(){
+  $.ajax({
+    type: "GET",
+    url:"/api/count",
+    async: true,
+    dataType: "text",
+    success: function( data ) {
+      var count = parseInt(data);
+      if (count !== previousCount) {
+        location.reload();
+      }
+    }
+}); 
+}, 1000);
+
+</script>
+{% endblock %}
