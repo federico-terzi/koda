@@ -27,24 +27,24 @@ class Pipeline:
             cv2.circle(corners_img, (x,y), 30, (255, 0, 0), 30)
         self.imgs["corners"] = corners_img
 
-    def hough_lines(self, img, lines_groups):
+    def hough_lines(self, img, lines):
         lines_img = cv2.cvtColor(img.copy(), cv2.COLOR_GRAY2BGR)
-        colors = [(0,255,0),(0,0,255)]
-        for j, lines in enumerate(lines_groups):
-            lines_img = draw_polar_lines(lines_img, lines, colors[j])
+        colors = [(255,0,0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+        for j, line in enumerate(lines):
+            lines_img = draw_polar_line(lines_img, line, colors[j])
         self.imgs["hough_lines"] = lines_img
 
-def draw_polar_lines(img, lines, color, thickness=1):
+def draw_polar_line(img, line, color, thickness=1):
     img_c = img.copy()
     distance_factor = max(img_c.shape)*2
-    for rho, theta in lines:
-        a = math.cos(theta)
-        b = math.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        pt1 = (int(x0 + distance_factor*(-b)), int(y0 + distance_factor*(a)))
-        pt2 = (int(x0 - distance_factor*(-b)), int(y0 - distance_factor*(a)))
-        cv2.line(img_c, pt1, pt2, color, thickness, cv2.LINE_AA)
+    rho, theta = line
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + distance_factor*(-b)), int(y0 + distance_factor*(a)))
+    pt2 = (int(x0 - distance_factor*(-b)), int(y0 - distance_factor*(a)))
+    cv2.line(img_c, pt1, pt2, color, thickness, cv2.LINE_AA)
     return img_c
 
 def corners_warp(img, corners):

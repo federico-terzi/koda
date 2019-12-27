@@ -46,5 +46,8 @@ class DetectionEngine:
         pipeline.next(color_corrected, label='color_correction')
 
         # Extract text
-        words = self.ocr.extract_text(warped)
+        try:
+            words = self.ocr.extract_text(warped)
+        except Exception:
+            words = []
         return (Document(warped, words), pipeline.imgs)

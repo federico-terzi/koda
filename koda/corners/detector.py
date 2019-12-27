@@ -93,70 +93,50 @@ class CornersDetectorByEdges(CornersDetector):
         img[img < self.noise_threshold] = 0
 
         # Get corners, adjust params for each iterations tries specified
-        e = None
+        lines = None
         for _ in range(iterations + 1):
-            try:
-                corners, lines = self.detect_corners(img, self.hough_threshold, hough_res=self.hough_resolution)
-                self.hough_lines = lines
-            except CornersNotFound as e1:
-                # Too few line, try to decrease threshold
-                self.hough_threshold = int(self.hough_threshold - (self.hough_threshold*0.1))
-                e = e1
-                continue
-            break
-
-        if e is not None:
-            raise e
-
-        corners = cluster_points_quadrants(corners, (TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE))
-
-        return np.array([self.scale_corner(*c, TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE, w, h) for c in corners])
-
-    def detect_corners(self, edges, threshold, hough_res=(1, np.pi/180)):
-        """
-        Given a single-channel image representing the edges, compute HoughLines and find the intersection
-        between lines of differente angles. Try all possible combinations of quadrilaters given
-        the intersections and find the best one which approximate the edges. Return the four corners of 
-        the best polygon found.
-
-        :param edges: Single-channel image
-        :param threshold: Threshold used for Hough lines
-        :param lines_limit: If more than lines_limit lines are found raise an error. Used to avoid extremely heavy computation due to 4 vertices polygon combinations.
-        :param hough_resolution: Resolution of the Hough transformation as a tuple (rho pixel res, theta degree res)
-        :returns: A tuple containing 2 values: numpy array of corners and bi-dimensional list of segmented lines
-        """
-        lines = cv2.HoughLines(edges, *hough_res, threshold)
-        if lines is None:
-            raise CornersNotFound("No Hough lines were found")
-        lines = lines.squeeze(axis=1)
-
-        # Differentiate lines in two clusters (horizontal and vertical)
-        lines_groups = cluster_lines(lines)
-        intersec = np.array(intersec_between_groups(lines_groups), dtype=np.int32).squeeze(axis=1)
-
-        # Differentiate corners in four clusters (top-left, top-right, bottom-right, bottom-left)
-        k = 4
-        if (len(intersec) < k):
-            raise CornersNotFound("Less than %d corners were found" % k)
-
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-        _, labels, _ = cv2.kmeans(np.array(intersec, dtype=np.float32), k, None, criteria, 10, 
-                cv2.KMEANS_RANDOM_CENTERS)
-        labels = labels.reshape(-1)
-        cluster = (intersec[labels == 0], intersec[labels == 1], intersec[labels == 2], intersec[labels == 3])
-
-        # For each combination of 4 vertices, compute scores based on edges coverage
-        scores = []
-        comb = list(itertools.product(*cluster))
-        for v in comb:
-            polys = np.zeros(edges.shape, dtype=np.int32)
-            cv2.polylines(polys, [np.array(v)], True, 255)
-            mask = polys[edges > 0] # Assume as input edges any values greater than 0
-            scores.append(np.sum(mask))
-            if millis() - self.start_ms >= self.timeout_ms:
-                self.timed_out = True
+            lines = self.find_hough_lines(img, self.hough_threshold, hough_res=self.hough_resolution)
+            if lines is not None:
                 break
 
-        # Use as best corners the vertices of the polygon with the best score
-        best = np.argmax(scores)
-        return (np.array(comb[best]), lines_groups)
+            # Too few lines, try to decrease threshold
+            self.hough_threshold = int(self.hough_threshold - (self.hough_threshold*0.1))
+
+        if lines is None:
+            raise CornersNotFound("No Hough lines were found")
+
+        # Sort lines based on theta (parallel lines will be indexed near each other)
+        lines = lines[lines[:,1].argsort()]
+
+        # Compute corners 
+        corners = [intersection(lines[0], lines[2]),
+                intersection(lines[1], lines[3]),
+                intersection(lines[2], lines[1]),
+                intersection(lines[3], lines[0])]
+        corners = cluster_points_quadrants(corners, (TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE))
+
+        self.hough_lines = lines
+        return np.array([self.scale_corner(*c, TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE, w, h) for c in corners])
+
+    def find_hough_lines(self, edges, threshold, hough_res=(1, np.pi/180)):
+        lines = cv2.HoughLines(edges, *hough_res, threshold)
+        if lines is None:
+            return None
+
+        strong_lines = np.zeros([4,1,2])
+        strong_index = 0
+        for rho, theta in lines[:,0]:
+            if rho < 0:
+                rho *= -1
+                theta -= np.pi
+
+            closeness_rho = np.isclose(rho, strong_lines[0:strong_index,0,0], atol = 50)
+            closeness_theta = np.isclose(theta, strong_lines[0:strong_index,0,1], atol = np.pi/36)
+            closeness = np.all([closeness_rho, closeness_theta], axis=0)
+
+            if not any(closeness) and strong_index < 4:
+                strong_lines[strong_index] = np.array([rho, theta])
+                strong_index += 1
+        
+        return strong_lines.squeeze(axis=1)
+
