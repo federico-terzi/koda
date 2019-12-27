@@ -3,6 +3,14 @@ import numpy as np
 from collections import defaultdict
 
 def cluster_points_quadrants(pts, img_shape):
+    """
+    Partition the input list of points into four list corresponding to each image 
+    quadrants (in order top-left, top-right, bottom-left, bottom-right).
+
+    :param pts: Array of two elements array
+    :param img_shape: Image width and height as array or tuple
+    :returns: List with 4 sublist
+    """
     hor_sep = img_shape[0] // 2
     ver_sep = img_shape[1] // 2
     l = [list() for _ in range(4)]

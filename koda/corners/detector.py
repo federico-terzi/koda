@@ -37,24 +37,16 @@ def millis():
 class CornersDetectorByEdges(CornersDetector):
     """
     Rely on a U-Net network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
-    Return the best corners found maximizing the quadrilater perimeter over the edges.
 
     Useful properties
-    - timed_out: False if the found corners are optimal, True if the maximizing process was stopped by the timeout
-    - hough_lines: Get the Hough lines grouped by angle referred to edges_img (note: img is heavily resized)
     - edges_img: Grayscale resized image of the detected edges
+    - hough_lines: Get the best 4 Hough lines found on the edges_img
     """
-    def __init__(self, timeout_ms=5000):
-        """
-        :param timeout_ms: Timeout specified in milliseconds after which the maximization stops
-        """
+    def __init__(self):
         super().__init__()
         self.noise_threshold = 80
         self.hough_threshold = 60
         self.hough_resolution = (1, np.pi/36)
-        self.start_ns = None
-        self.timeout_ms = timeout_ms
-        self.timed_out = False
         self.edge_detector = UNetEdgeDetector()
         self.edge_detector.load_model('koda/unet-70.h5')
         self.hough_lines = None
@@ -72,12 +64,12 @@ class CornersDetectorByEdges(CornersDetector):
 
     def find_corners(self, img, iterations=3):
         """
-        Iteratively detect corners and adjust parameters if None corners were found.
-        For corner detection detail see self.detect_corners
+        Iteratively find the best 4 Hough lines and adjust parameters if none were found.
+        Compute corners as intersection of Hough lines.
 
         :param img: Input three-channel image
         :param iterations: Number of tries to find corners
-        :returns: numpy 2D array representing the corners coordinates
+        :returns: numpy 2D array representing the corners coordinates scaled to the original input image.
         """
         self.hough_lines = None
         self.timed_out = False
@@ -119,6 +111,14 @@ class CornersDetectorByEdges(CornersDetector):
         return np.array([self.scale_corner(*c, TARGET_IMAGE_SIZE, TARGET_IMAGE_SIZE, w, h) for c in corners])
 
     def find_hough_lines(self, edges, threshold, hough_res=(1, np.pi/180)):
+        """
+        Search for Hough lines on the input image and find the best four by confidence.
+
+        :param edges: The input single channel image
+        :param threshold: Hough lines threshold
+        :param hough_res: Hough lines resolution (default = (1, np.pi/180))
+        :returns: Array of lines (two elements array) expressed using polar notation (rho, theta)
+        """
         lines = cv2.HoughLines(edges, *hough_res, threshold)
         if lines is None:
             return None

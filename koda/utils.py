@@ -3,6 +3,13 @@ import cv2
 import numpy as np
 
 class Pipeline:
+    """
+    Data structure to keep track of the Koda pipeline partial results
+    
+    Attributes:
+        steps: List of strings storing the pipeline steps
+        imgs: dict of images, one per each pipeline step
+    """
     def __init__(self):
         self.steps = ['edges','hough_lines','corners','warp']
         self.imgs = dict()
@@ -35,6 +42,15 @@ class Pipeline:
         self.imgs["hough_lines"] = lines_img
 
 def draw_polar_line(img, line, color, thickness=1):
+    """
+    Draw a line, expressed in polar notaion (rho, theta) on a copy of the given image 
+    
+    :param img: Image which copy will be drawn on
+    :param line: Array or tuple of two elements corresponding to rho and theta 
+    :param color: BGR Color used to draw the line
+    :param thickness: Thickness of the line (default = 1)
+    :returns: A copy of the image with the line drawn
+    """
     img_c = img.copy()
     distance_factor = max(img_c.shape)*2
     rho, theta = line
@@ -48,6 +64,13 @@ def draw_polar_line(img, line, color, thickness=1):
     return img_c
 
 def corners_warp(img, corners):
+    """
+    Given an image, warp the regione delimited by the given corners into a new image.
+    
+    :param img: The start image, containg the region of interest
+    :params corners: Array of 4 points (point as a two elements array)
+    :returns: The warped image of size the maximum of the given corners along each axis
+    """
     shape = (corners.max(axis=0)[0], corners.max(axis=0)[1])
     dst_corners = np.array([[0,0],
                             [0, shape[1]],
