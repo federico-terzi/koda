@@ -32,14 +32,15 @@ class Document:
                 # Warped
                 tl, br = (w[1], w[2]), (w[3], w[4])
                 cv2.rectangle(overlay_warped, tl, br, color, cv2.FILLED)
-                res_warped = cv2.addWeighted(overlay_warped, alpha, self.warped, 1-alpha, 0)
 
                 # Original
                 x0, y0, x1, y1 = w[1:5]
                 pts = np.array([[[x0, y0], [x0, y1], [x1, y1], [x1, y0]]], dtype=np.float32)
                 pts = cv2.perspectiveTransform(pts, self.IM)[0]
                 cv2.fillConvexPoly(overlay, np.array(pts, dtype=np.int32), color, cv2.LINE_AA)
-                res = cv2.addWeighted(overlay, alpha, self.img, 1-alpha, 0)
+
+        res_warped = cv2.addWeighted(overlay_warped, alpha, self.warped, 1-alpha, 0)
+        res = cv2.addWeighted(overlay, alpha, self.img, 1-alpha, 0)
 
         return (res, res_warped)
 
