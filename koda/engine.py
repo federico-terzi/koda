@@ -21,21 +21,36 @@ class Document:
     Methods:
         findWord: Search for a specified word in the document
     """
-    def __init__(self, img, words):
+    def __init__(self, words, img, warped, M):
         self.words = words
         self.img = img
+        self.warped = warped
+        _, self.IM = cv2.invert(M)
 
     def findWord(self, word):
         """
         Find a word within the document
-        
-        :returns: A copy of the document image with bounding box drawn around the searched word
+
+        :returns: A tuple of two images copy with the searched word highlighted. The first is a copy of the original image, the second a copy of the warped one.
         """
-        res = self.img.copy()
+        overlay, overlay_warped = self.img.copy(), self.warped.copy()
+        color = (0, 255, 255)
+        alpha = 0.3
         for w in self.words:
             if (word.lower() in w[0].lower()):
-                cv2.rectangle(res, (w[1], w[2]), (w[3], w[4]), (255,0,0), 2)
-        return res
+                # Warped
+                tl, br = (w[1], w[2]), (w[3], w[4])
+                cv2.rectangle(overlay_warped, tl, br, color, cv2.FILLED)
+                res_warped = cv2.addWeighted(overlay_warped, alpha, self.warped, 1-alpha, 0)
+
+                # Original
+                r = np.array([[[w[1], w[2]], [w[3], w[4]]]], dtype=np.float32)
+                r = cv2.perspectiveTransform(r, self.IM)[0]
+                tl, br = (r[0][0], r[0][1]), (r[1][0], r[1][1])
+                cv2.rectangle(overlay, tl, br, color, cv2.FILLED)
+                res = cv2.addWeighted(overlay, alpha, self.img, 1-alpha, 0)
+
+        return (res, res_warped)
 
 class DetectionEngine:
     """
@@ -68,7 +83,10 @@ class DetectionEngine:
         pipeline.next(img, corners=corners)
 
         # Warp image
-        warped = corners_warp(img, corners)
+        shape = (corners.max(axis=0)[0], corners.max(axis=0)[1])
+        dst_corners = np.array([[0,0],[0, shape[1]],[shape[0], 0],[shape[0], shape[1]]])
+        M = cv2.getPerspectiveTransform(corners.astype(np.float32), dst_corners.astype(np.float32))
+        warped = cv2.warpPerspective(img, M, shape)
         pipeline.next(warped, label='warp')
 
         # Extract text
@@ -77,4 +95,4 @@ class DetectionEngine:
         except Exception:
             words = []
 
-        return (Document(warped, words), pipeline.imgs)
+        return (Document(words, img, warped, M), pipeline.imgs)
