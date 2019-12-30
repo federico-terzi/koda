@@ -133,3 +133,6 @@ dmypy.json
 
 # UNet model
 *.h5
+
+# Generic output
+out/
