@@ -6,11 +6,13 @@ class Document:
     Model class for a detected document
 
     Attributes:
-        img: The warped image of the document
-        words: List of all single word found in the document by OCR
+        img: Original input image 
+        warped: Warped image with the detected document as region of interest
+        words: List of all single word found in the warped image by OCR
+        IM: Perspective transformation matrix from the warped image to the original one.
 
     Methods:
-        findWord: Search for a specified word in the document
+        findWord: Search for a specified word in the documen. Returns a tuple (original, warped) of images with the word highlighted
     """
     def __init__(self, words, img, warped, M):
         self.words = words

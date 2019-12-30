@@ -11,7 +11,7 @@ from .utils import *
 
 class CornersDetector(ABC):
     """
-    Abstrct class for corners detector of a document in an image
+    Abstract class for corners detector of a document in an image
     """
 
     @abstractmethod
@@ -36,7 +36,7 @@ def millis():
 
 class CornersDetectorByEdges(CornersDetector):
     """
-    Rely on a U-Net network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
+    Rely on a unet network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
 
     Useful properties
     - edges_img: Grayscale resized image of the detected edges
@@ -69,7 +69,7 @@ class CornersDetectorByEdges(CornersDetector):
 
         :param img: Input three-channel image
         :param iterations: Number of tries to find corners
-        :returns: numpy 2D array representing the corners coordinates scaled to the original input image.
+        :returns: numpy 2D array representing the corners coordinates scaled to the original input image and ordered based on quadrants.
         """
         self.hough_lines = None
         self.timed_out = False
