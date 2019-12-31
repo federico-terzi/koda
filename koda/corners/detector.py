@@ -31,9 +31,6 @@ class CornersNotFound(RuntimeError):
     def __init__(self, message):
         super().__init__(message)
 
-def millis():
-    return int(round(time.time() * 1000))
-
 class CornersDetectorByEdges(CornersDetector):
     """
     Rely on a unet network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
@@ -73,7 +70,6 @@ class CornersDetectorByEdges(CornersDetector):
         """
         self.hough_lines = None
         self.timed_out = False
-        self.start_ms = millis()
 
         h, w = img.shape[:-1]
 
