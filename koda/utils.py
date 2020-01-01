@@ -62,19 +62,3 @@ def draw_polar_line(img, line, color, thickness=1):
     pt2 = (int(x0 - distance_factor*(-b)), int(y0 - distance_factor*(a)))
     cv2.line(img_c, pt1, pt2, color, thickness, cv2.LINE_AA)
     return img_c
-
-def corners_warp(img, corners):
-    """
-    Given an image, warp the regione delimited by the given corners into a new image.
-    
-    :param img: The start image, containg the region of interest
-    :params corners: Array of 4 points (point as a two elements array)
-    :returns: The warped image of size the maximum of the given corners along each axis
-    """
-    shape = (corners.max(axis=0)[0], corners.max(axis=0)[1])
-    dst_corners = np.array([[0,0],
-                            [0, shape[1]],
-                            [shape[0], 0],
-                            [shape[0], shape[1]]])
-    M = cv2.getPerspectiveTransform(corners.astype(np.float32), dst_corners.astype(np.float32))
-    return cv2.warpPerspective(img, M, shape)

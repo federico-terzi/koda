@@ -1,6 +1,7 @@
 from .corners.detector import CornersDetectorByEdges, CornersNotFound
 from .ocr.tesseract import TesseractOCREngine
 from .utils import *
+from .document import *
 import cv2
 
 class DocumentNotFound(CornersNotFound):
@@ -9,33 +10,6 @@ class DocumentNotFound(CornersNotFound):
     """
     def __init__(self, message):
         super().__init__(message)
-
-class Document:
-    """
-    Model class for a detected document
-
-    Attributes:
-        img: The warped image of the document
-        words: List of all single word found in the document by OCR
-
-    Methods:
-        findWord: Search for a specified word in the document
-    """
-    def __init__(self, img, words):
-        self.words = words
-        self.img = img
-
-    def findWord(self, word):
-        """
-        Find a word within the document
-        
-        :returns: A copy of the document image with bounding box drawn around the searched word
-        """
-        res = self.img.copy()
-        for w in self.words:
-            if (word.lower() in w[0].lower()):
-                cv2.rectangle(res, (w[1], w[2]), (w[3], w[4]), (255,0,0), 2)
-        return res
 
 class DetectionEngine:
     """
@@ -68,7 +42,13 @@ class DetectionEngine:
         pipeline.next(img, corners=corners)
 
         # Warp image
-        warped = corners_warp(img, corners)
+        tl, tr, bl, br = corners
+        h1, h2 = bl[0] - tl[0], br[0] - tr[0]
+        w1, w2 = tr[1] - tl[1], br[1] - bl[1]
+        shape = (int(np.mean([h1, h2])), int(np.mean([w1, w2])))
+        dst_corners = np.array([[0,0],[0, shape[1]],[shape[0], 0],[shape[0], shape[1]]])
+        M = cv2.getPerspectiveTransform(corners.astype(np.float32), dst_corners.astype(np.float32))
+        warped = cv2.warpPerspective(img, M, shape)
         pipeline.next(warped, label='warp')
 
         # Extract text
@@ -77,4 +57,4 @@ class DetectionEngine:
         except Exception:
             words = []
 
-        return (Document(warped, words), pipeline.imgs)
+        return (Document(words, img, warped, M), pipeline.imgs)

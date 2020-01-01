@@ -14,7 +14,7 @@ MODEL_PATH = os.getenv('KODA_MODEL_PATH', "koda/unet-70.h5")
 
 class CornersDetector(ABC):
     """
-    Abstrct class for corners detector of a document in an image
+    Abstract class for corners detector of a document in an image
     """
 
     @abstractmethod
@@ -34,12 +34,9 @@ class CornersNotFound(RuntimeError):
     def __init__(self, message):
         super().__init__(message)
 
-def millis():
-    return int(round(time.time() * 1000))
-
 class CornersDetectorByEdges(CornersDetector):
     """
-    Rely on a U-Net network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
+    Rely on a unet network to retrieve document edges and find Hough lines. Compute intersections as corners candidates.
 
     Useful properties
     - edges_img: Grayscale resized image of the detected edges
@@ -49,7 +46,7 @@ class CornersDetectorByEdges(CornersDetector):
         super().__init__()
         self.noise_threshold = 80
         self.hough_threshold = 60
-        self.hough_resolution = (1, np.pi/36)
+        self.hough_resolution = (1, np.pi/180)
         self.edge_detector = UNetEdgeDetector()
         self.edge_detector.load_model(MODEL_PATH)
         self.hough_lines = None
@@ -72,11 +69,10 @@ class CornersDetectorByEdges(CornersDetector):
 
         :param img: Input three-channel image
         :param iterations: Number of tries to find corners
-        :returns: numpy 2D array representing the corners coordinates scaled to the original input image.
+        :returns: numpy 2D array representing the corners coordinates scaled to the original input image and ordered based on quadrants.
         """
         self.hough_lines = None
         self.timed_out = False
-        self.start_ms = millis()
 
         h, w = img.shape[:-1]
 
