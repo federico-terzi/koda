@@ -1,24 +1,19 @@
-```
-sudo docker build -t koda .
-```
-
-Per avviare jupyter
+Start by building the docker image with (it may require using sudo on linux):
 
 ```
-sudo docker run --rm -p 8888:8888 -it koda
+sudo ./build_docker.sh
 ```
 
-Poi navigare su [http://localhost:8888](http://localhost:8888)
-
-### Alternative use (no-copy):
-
-Build docker image
-```
-docker build -t koda -f Dockerfile-no-copy .
-```
-
-Run image mounting current directory to /usr/src/app/koda
+Then you can either start the Flask server with:
 
 ```
-docker run --mount type=bind,source="$(pwd)",target=/usr/src/app -p 8888:8888 -it koda
+sudo ./start_server.sh
 ```
+
+Or you can open the Jupyter notebook with:
+
+```
+sudo ./start_jupyter.sh
+```
+
+And then navigate to [http://localhost:8888](http://localhost:8888)
