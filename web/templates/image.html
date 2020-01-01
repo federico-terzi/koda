@@ -3,4 +3,15 @@
 
 <img src="/api/get_image?id={{iid}}&type=highlight&t={{range(1, 51) | random}}" class="img-fluid"/>
 
+<h1>Pipeline</h1>
+<p>Click on any of the following images to open the gallery</p>
+
+<a href="/api/get_image?id={{iid}}&type=original&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=original&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+<a href="/api/get_image?id={{iid}}&type=thumb&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=thumb&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+<a href="/api/get_image?id={{iid}}&type=edges&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=edges&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+<a href="/api/get_image?id={{iid}}&type=hough_lines&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=hough_lines&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+<a href="/api/get_image?id={{iid}}&type=corners&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=corners&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+<a href="/api/get_image?id={{iid}}&type=warped&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=warped&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+<a href="/api/get_image?id={{iid}}&type=highlight&t={{range(1, 51) | random}}" data-lightbox="pipeline"><img src="/api/get_image?id={{iid}}&type=highlight&t={{range(1, 51) | random}}" class="img-fluid"/></a>
+
 {% endblock %}

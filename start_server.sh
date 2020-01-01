@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "Starting koda server..."
+echo "Starting docker container with Flask Server..."
 
-export FLASK_APP=/src/server.py
-export FLASK_RUN_PORT=8888
-export KODA_MODEL_PATH=/src/models/unet-70.h5
-
-flask run --host=0.0.0.0 --without-threads
+docker run --rm -p 8888:8888 -v "$(pwd):/src" -it koda /src/web/start_flask.sh

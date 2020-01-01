@@ -100,13 +100,9 @@ def process():
         cv2.imwrite(os.path.join(RESULT_DIR, f"{filename}_corners.png"), imgs['corners'])
         cv2.imwrite(os.path.join(RESULT_DIR, f"{filename}_warp.png"), imgs['warp'])
 
-        highlight = doc.findWord(word)
+        highlight, warped = doc.findWord(word)
 
         cv2.imwrite(os.path.join(RESULT_DIR, f"{filename}_highlight.png"), highlight)
+        cv2.imwrite(os.path.join(RESULT_DIR, f"{filename}_warped.png"), warped)
 
         return redirect("/")
-
-"""
-# Read image
-
-"""

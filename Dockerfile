@@ -14,7 +14,5 @@ COPY ./requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 ENV PYTHONUNBUFFERED 1
-
-COPY . .
-    
-CMD jupyter notebook --port 8888 --ip 0.0.0.0 --allow-root --NotebookApp.token=''
+ 
+CMD jupyter notebook --port 8888 --ip 0.0.0.0 --allow-root --NotebookApp.token='' --notebook-dir='/src'
