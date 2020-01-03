@@ -43,8 +43,8 @@ class DetectionEngine:
 
         # Warp image
         tl, tr, bl, br = corners
-        h1, h2 = bl[0] - tl[0], br[0] - tr[0]
-        w1, w2 = tr[1] - tl[1], br[1] - bl[1]
+        h1, h2 = np.linalg.norm(bl - tl), np.linalg.norm(br - tr)
+        w1, w2 = np.linalg.norm(tr - tl), np.linalg.norm(br - bl)
         shape = (int(np.mean([h1, h2])), int(np.mean([w1, w2])))
         dst_corners = np.array([[0,0],[0, shape[1]],[shape[0], 0],[shape[0], shape[1]]])
         M = cv2.getPerspectiveTransform(corners.astype(np.float32), dst_corners.astype(np.float32))

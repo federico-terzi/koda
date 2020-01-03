@@ -30,7 +30,7 @@ class Pipeline:
 
     def corners(self, img, corners):
         corners_img = img.copy()
-        csize = int(np.min(img.shape[0:2]) * 0.03)
+        csize = int(np.min(img.shape[0:2]) * 0.01)
         for x,y in corners:
             cv2.circle(corners_img, (x,y), csize, (255, 0, 0), -1)
         self.imgs["corners"] = corners_img
