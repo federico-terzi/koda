@@ -42,10 +42,15 @@ class DetectionEngine:
         pipeline.next(img, corners=corners)
 
         # Warp image
+        ratio = np.sqrt(2)
         tl, tr, bl, br = corners
         h1, h2 = np.linalg.norm(bl - tl), np.linalg.norm(br - tr)
         w1, w2 = np.linalg.norm(tr - tl), np.linalg.norm(br - bl)
-        shape = (int(np.mean([h1, h2])), int(np.mean([w1, w2])))
+        h, w = int(np.min([h1, h2])), int(np.min([w1, w2]))
+        if (h < w):
+            shape = (h, int(h*ratio))
+        else:
+            shape = (int(w*ratio), w)
         dst_corners = np.array([[0,0],[0, shape[1]],[shape[0], 0],[shape[0], shape[1]]])
         M = cv2.getPerspectiveTransform(corners.astype(np.float32), dst_corners.astype(np.float32))
         warped = cv2.warpPerspective(img, M, shape)
