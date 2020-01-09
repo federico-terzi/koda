@@ -1,19 +1,42 @@
 \relax 
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Edge Detection}{1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}First Attempts with Canny}{1}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces TODO}}{1}}
-\newlabel{fig:canny_gaussian}{{1}{1}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces TODO}}{2}}
-\newlabel{fig:canny_comparison}{{2}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Deep Learning Approach}{2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Example of the way a sample is fed to the network.}}{3}}
-\newlabel{fig:label_edge}{{3}{3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Example of Data Augmentation}}{4}}
-\newlabel{fig:augmented_image}{{4}{4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Model loss over the first 80 epochs.}}{5}}
-\newlabel{fig:model_loss}{{5}{5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Comparison of the edge detector over different epochs.}}{5}}
-\newlabel{fig:edge_comparison_epoch}{{6}{5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Comparison of Canny and Deep Learning-based edge detection.}}{6}}
-\newlabel{fig:deep_comparison}{{7}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Architecture}{1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces KODA Pipeline scheme with sub-tasks. The computationally expensive processing is done once per input image, then the user can search for keywords and retrieves the output image multiple times repeatedly.}}{2}}
+\newlabel{fig:pipeline}{{1}{2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Image processing tasks example. Note: edges detection returns a resized (256x256)}}{3}}
+\newlabel{fig:imageprocessing}{{2}{3}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Edge Detection}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}First Attempts with Canny}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Application of Canny edge detector to the original image without/with a Gaussian Filter}}{4}}
+\newlabel{fig:canny_gaussian}{{3}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Comparison of different thresholds for Canny edge detector}}{4}}
+\newlabel{fig:canny_comparison}{{4}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Deep Learning Approach}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Example of the way a sample is fed to the network.}}{5}}
+\newlabel{fig:label_edge}{{5}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Example of Data Augmentation}}{6}}
+\newlabel{fig:augmented_image}{{6}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Model loss over the first 80 epochs.}}{7}}
+\newlabel{fig:model_loss}{{7}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Comparison of the edge detector over different epochs.}}{7}}
+\newlabel{fig:edge_comparison_epoch}{{8}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Comparison of Canny and Deep Learning-based edge detection.}}{8}}
+\newlabel{fig:deep_comparison}{{9}{8}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Corners detection}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Hough Transform}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces TODO}}{10}}
+\newlabel{fig:hough}{{10}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Computing corners}{10}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces TODO}}{11}}
+\newlabel{fig:computingcorners}{{11}{11}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Document analysis}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Warping}{12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces TODO}}{12}}
+\newlabel{fig:warping}{{12}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}OCR}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Keyword highlighting}{13}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Process to apply the highlight overlay.}}{14}}
+\newlabel{fig:keywordhighliting}{{13}{14}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces  Examples of the keyword “on” highlighting. Note: the keyword is not searched as a perfect match, but as a substring of actual words. The highlight is applied to the entire word.}}{15}}
+\newlabel{fig:keywordhighliting2}{{14}{15}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{16}}
