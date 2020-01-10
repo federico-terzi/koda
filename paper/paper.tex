@@ -160,7 +160,15 @@ Once a set of lines is found, a sub-task is responsible to select the four best 
 
 Once the four Hough lines corresponding to the document edges are found, computing the document corners means to correctly intersect the lines. They are ordered based on theta, so that parallel lines are near each other, then the intersections between alternated lines are computed. In particular, the intersection using polar is calculated as follow:
 
-%TODO FORMULA
+\begin{equation*}
+	\begin{bmatrix} \cos(\sigma_1) & \sin(\sigma_1) \\ \cos(\sigma_2) & \sin(\sigma_2) \end{bmatrix}
+	\begin{bmatrix} x \\ y \end{bmatrix}
+	=
+	\begin{bmatrix} \gamma_1 \\ \gamma_2 \end{bmatrix}
+\end{equation*}
+\begin{equation*}
+	Ax = b
+\end{equation*}
 
 The implementation to find the intersection relies on \footnote{ numpy.linalg.solve: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.solve.html} which may raises an exception if the A matrix is singular because the computation is not possible. Whenever this happens, a least square solution, if it converges, via \footnote{numpy.linalg.lstsq: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html} is provided.
 
@@ -188,7 +196,13 @@ The first step of document analysis task is to warp the found paper within the i
 
 In order to implement the \textit{Optical Character Recognition} feature needed to highlight keywords, KODA uses \textit{Tesseract}[TODO REF], an open-source OCR engine by Google. Moreover, it uses \textit{TesserOCR}[TODO REF], a Python wrapper which provides a fast binding to the C++ native library and exposes all the low-level APIs.
 
-TODO: talk about the iterator and put an image with bounding boxes
+Due to the keyword highlighting feature, it was crucial to get the position of single words rather than blocks of text. This is easily achieved using Tesseract's \textit{Iterators}, by setting the \textit{Page Iterator Level} to \texttt{WORD}. Thereafter, KODA can cycle through each word, filtering out the ones with low confidence and extracting the bounding boxes, as well as the text, as shown in Fig. \ref{fig:ocr}.
+
+\begin{figure}[H]
+	\makebox[\textwidth][c]{\includegraphics[width=1\textwidth]{ocr.png}}
+	\caption{Example of OCR word segmenting}
+	\label{fig:ocr}
+\end{figure}
 
 \subsection{Keyword highlighting}
 
@@ -228,6 +242,17 @@ The KODA implementation (shown in Fig. \ref{fig:keywordhighliting}) relies on th
 
 \section{Conclusion}
 
-TODO
+The proposed pipeline is able to correctly recognize and analyze the majority of document pictures in real-world scenarios, searching for the given keywords and preserving the original perspective, as shown in Fig. \ref{fig:result}.
+
+\begin{figure}[H]
+	\makebox[\textwidth][c]{\includegraphics[width=1\textwidth]{result.png}}
+	\caption{Example of KODA pipeline result for keyword "the". Overall output image on the left and close up on the right.}
+	\label{fig:result}
+\end{figure}
+
+That said, KODA is still limited in certain situations. Firstly, the edge detection model was trained specifically to recognize white documents and, as a result, struggles with colored ones.
+Moreover, although the deep learning-based edge detection offers superior results compared to traditional techniques, it is computationally expensive. In particular, the model itself weights about 360 megabytes and takes about 0.5/1 seconds to process the image on a modern desktop CPU, which makes it unsuitable for mobile applications.
+
+Future improvements may focus on the creation of a less computationally and memory expensive edge detection, so that the pipeline can be ported on a mobile device.
 
 \end{document}
