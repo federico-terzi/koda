@@ -4,8 +4,10 @@
 \usepackage{float}
 \usepackage{amsmath}
 \usepackage[margin=3cm]{geometry}
+\usepackage{titlesec}
 
 \graphicspath{{images/}}
+\newcommand{\sectionbreak}{\clearpage}
 
 %opening
 \title{koda: Deep Learning-Enhanced Pipeline for Keyword Detection in Document Images} 
@@ -26,7 +28,7 @@ Document detection in images is a well-known problem, whose most common use-case
 
 Our proposed pipeline, KODA, is specifically designed to detect documents from images, extract all the interesting keywords and, eventually, highlight them in the original image, so that the user can conveniently see them.
 
-The paper is organized as follows: the first section, Architecture, describes the general structure and components of KODA. In the Edge Detection section, starting from the limitations of traditional techniques, a deep learning-based approach is proposed, along with a throughout comparison. Thereafter, the Corners Detection section describes the document detection algorithm itself, exploiting Hough transformations. Then, in the Document analysis section, warping, OCR and highlighting techniques are described. Finally, the concluding remarks are drawn in the last section.
+The paper is organized as follows: the first section, Architecture, describes the general structure and components of KODA. In the Edge Detection section, starting from the limitations of traditional techniques, a deep learning-based approach is proposed, along with a thorough comparison. Thereafter, the Corners Detection section describes the document detection algorithm itself, exploiting Hough transformations. Then, in the Document analysis section, warping, OCR and highlighting techniques are described. Finally, the concluding remarks are drawn in the last section.
 
 \section{Architecture}
 
@@ -34,17 +36,19 @@ KODA architecture was inspired by a Dropbox article \footnote{https://blogs.drop
 
 The process is divided into two macro tasks (shown in Fig. \ref{fig:pipeline}): corners detection and document analysis. The formers takes as input a generic image containing a document and returns the 2D coordinates of its corners. The latter use the corners coordinates to warp the image, apply an OCR to read the document words and returns the original and warped image with the highlighted keywords specified by the user. Considering KODA as a black box, the user loads an image and, for each keyword specified, retrieves a copy of the image containing the highlighted word.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
+	\includegraphics[width=\linewidth]{ipt.png}
+	\caption{Image processing tasks example. Note: edges detection returns a resized (256x256)}
+	\label{fig:imageprocessing}
+\end{figure}
+
+\begin{figure}[!htbp]
 	\includegraphics[width=\linewidth]{Pipeline.png}
 	\caption{KODA Pipeline scheme with sub-tasks. The computationally expensive processing is done once per input image, then the user can search for keywords and retrieves the output image multiple times repeatedly.}
 	\label{fig:pipeline}
 \end{figure}
 
-\begin{figure}[H]
-	\includegraphics[width=\linewidth]{ipt.png}
-	\caption{Image processing tasks example. Note: edges detection returns a resized (256x256)}
-	\label{fig:imageprocessing}
-\end{figure}
+
 
 \section{Edge Detection}
 
@@ -55,10 +59,12 @@ good results, it is crucial to employ a solid \textit{edge detection} algorithm.
 
 \subsection{First Attempts with Canny}
 
-Our initial attempts to detect document edges involved the well known \textit{Canny edge detector} [TODO REF]. Although applying the filter directly does detect the sheet edges, it presents many artifacts
+Our initial attempts to detect document edges involved the well known \textit{Canny edge detector} \footnote{J. Canny, "A Computational Approach to Edge Detection," in IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. PAMI-8, no. 6, pp. 679-698, Nov. 1986.
+	doi: 10.1109/TPAMI.1986.4767851}. 
+Although applying the filter directly does detect the sheet edges, it presents many artifacts
 due to the text printed on the document itself (as seen in Fig. \ref{fig:canny_gaussian} (B)).
 
-In order to mitigate the problem, a \textit{Gaussian filter} [TODO REF] is applied before the edge detection, obtaining a clear highlighting of the interesting edges (as seen in Fig.  \ref{fig:canny_gaussian} (C)).
+In order to mitigate the problem, a \textit{Gaussian filter} is applied before the edge detection, obtaining a clear highlighting of the interesting edges (as seen in Fig.  \ref{fig:canny_gaussian} (C)).
 
 \begin{figure}[!htb]
 	\includegraphics[width=\linewidth]{canny_gaussian.png}
@@ -88,8 +94,9 @@ Due to the lack of a suitable dataset with labelled document edges, a custom one
 In particular, 250 images containing document sheets were taken under different lighting conditions, 
 backgrounds and positions. Thereafter, every image was labelled with the 4 corner coordinates of the document.
 
-For this particular task, \textit{Keras}, an open-source Python library for Deep Learning [TODO REF], was chosen to build the model. Many experiments were made to find the right architecture, most of them 
-exploiting \textit{convolutional neural networks}. Above all of them, KODA uses \textit{U-Net}[TODO REF], a popular architecture for \textit{object segmentation}, and in particular an open-source implementation for Keras [TODO REF].
+For this particular task, \textit{Keras}, an open-source Python library for Deep Learning \footnote{https://keras.io/}, was chosen to build the model. Many experiments were made to find the right architecture, most of them 
+exploiting \textit{convolutional neural networks}. Above all of them, KODA uses \textit{U-Net}
+\footnote{O. Ronneberger, P. Fischer, T. Brox, "U-Net: Convolutional Networks for Biomedical Image Segmentation", CoRR, abs/1505.04597, 2015}, a popular architecture for \textit{object segmentation}, and in particular an open-source implementation for Keras \footnote{https://github.com/zhixuhao/unet}.
 
 The model takes a 3-dimensional input image (RGB) and outputs a 2-d map of the edges. Although the shape
 of those matrices can vary, KODA uses a 256 pixels side for both input and output, as it provides a reasonable compromise between size and resolution. Fig. \ref{fig:label_edge} illustrates the way a
@@ -103,8 +110,8 @@ output label is a gray scale map of the expected document edges.
 \end{figure}
 
 Due to the high number of required samples, the dataset itself is insufficient to fully train the network.
-For this reason, a technique called \textit{data augmentation}[TODO REF] is applied to provide the model
-with enough variability. In particular, before being fed to the network, a random combination of transformations, such as scale, translation, rotation and brightness changes, is applied to the image and to the resulting edge feature map, as shown in Fig. \ref{fig:augmented_image}.
+For this reason, a technique called \textit{data augmentation} is applied to provide the model
+with enough variation. In particular, before being fed to the network, a random combination of transformations, such as scale, translation, rotation and brightness changes, is applied to the image and to the resulting edge feature map, as shown in Fig. \ref{fig:augmented_image}.
 
 \begin{figure}[H]
 	\includegraphics[width=\linewidth]{augmented_image.png}
@@ -124,7 +131,7 @@ was not representative of the model's quality. As it can be seen in Fig. \ref{fi
 
 Despite being simple, the proposed solution is to save the current model's results over a set of test images after each epoch, as well as saving the model itself. This approach allows a simple comparative analysis, and allowed us to select the best model according to its actual results. Epoch 70 produced the best performing model from a generalization standpoint, while further epochs shown interesting but less effective trends. In particular, as you can see from Fig. \ref{fig:edge_comparison_epoch}, the model at epoch 70 is capable of detecting both (A) and (B) edges fairly well, whereas the one at epoch 140 presented an improved result in (A), removing uninteresting objects from the top portion of the image, but was almost incapable of recognizing edges in (B). This phenomenon could be explained as the model starting to empathize straight lines and discarding curved ones. Unfortunately, the latter are a common case and should be considered, therefore the first model was chosen.
 
-\begin{figure}[htb!]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=\linewidth]{edge_comparison_epoch.png}
 	\caption{Comparison of the edge detector over different epochs.}
@@ -134,7 +141,7 @@ Despite being simple, the proposed solution is to save the current model's resul
 
 An overview of the end result can be seen in Fig. \ref{fig:deep_comparison}, which also shows a comparison with the previous Canny-based approach.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
 	\centering
 	\makebox[\textwidth][c]{\includegraphics[width=1.2\textwidth]{deep_edge_comparison.png}}%
 
@@ -142,9 +149,9 @@ An overview of the end result can be seen in Fig. \ref{fig:deep_comparison}, whi
 	\label{fig:deep_comparison}
 \end{figure}
 
-\section{Corners detection}
+\section{Corner detection}
 
-The corners detection task goal is to find the four document corners starting from the one-channel edges image. These points should be as precise as possible in order to define the tightest convex polygon around the document. The intuitive method to solve this task is to use the Hough transformation, as suggested in a Dropbox article \footnote{https://blogs.dropbox.com/tech/2016/08/fast-and-accurate-document-detection-for-scanning/}, to find straight lines that best approximate the document edges; the corners will be the intersection between those lines.
+The corner detection task goal is to find the four document corners starting from the one-channel edges image. These points should be as precise as possible in order to define the tightest convex polygon around the document. The intuitive method to solve this task is to use the Hough transformation, as suggested in a Dropbox article \footnote{https://blogs.dropbox.com/tech/2016/08/fast-and-accurate-document-detection-for-scanning/}, to find straight lines that best approximate the document edges; the corners will be the intersection between those lines.
 
 The suggested method, relies on finding more than one line per edge resulting in a set of intersections points. Those points are used to compute polygons and the one which best approximate the document edges is chosen to define the four corners. However, from empirical experiments, this could lead to an high amount of intersections meaning an enormous amount of polygons to test. Instead, KODA implementation extracts the best four lines ahead, so their intersections are immediately the best corners.
 
@@ -178,7 +185,7 @@ Once the four Hough lines corresponding to the document edges are found, computi
 
 The implementation to find the intersection relies on \footnote{ numpy.linalg.solve: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.solve.html} which may raises an exception if the A matrix is singular because the computation is not possible. Whenever this happens, a least square solution, if it converges, via \footnote{numpy.linalg.lstsq: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html} is provided.
 
-To maintain uniformity for the client APi, the corners are sorted following the Cartesian quadrants and they are scaled up based on the original image size provided as input.
+To maintain uniformity for the client API, the corners are sorted following the Cartesian quadrants and they are scaled up based on the original image size provided as input.
 
 \begin{figure}[H]
 	\makebox[\textwidth][c]{\includegraphics[width=1.2\textwidth]{computingcorners.png}}
@@ -200,7 +207,7 @@ The first step of document analysis task is to warp the found paper within the i
 
 \subsection{OCR}
 
-In order to implement the \textit{Optical Character Recognition} feature needed to highlight keywords, KODA uses \textit{Tesseract}[TODO REF], an open-source OCR engine by Google. Moreover, it uses \textit{TesserOCR}[TODO REF], a Python wrapper which provides a fast binding to the C++ native library and exposes all the low-level APIs.
+In order to implement the \textit{Optical Character Recognition} feature needed to highlight keywords, KODA uses \textit{Tesseract}\footnote{https://github.com/tesseract-ocr/tesseract}, an open-source OCR engine by Google. Moreover, it uses \textit{TesserOCR}\footnote{https://github.com/sirfz/tesserocr}, a Python wrapper which provides a fast binding to the C++ native library and exposes all the low-level APIs.
 
 Due to the keyword highlighting feature, it was crucial to get the position of single words rather than blocks of text. This is easily achieved using Tesseract's \textit{Iterators}, by setting the \textit{Page Iterator Level} to \texttt{WORD}. Thereafter, KODA can cycle through each word, filtering out the ones with low confidence and extracting the bounding boxes, as well as the text, as shown in Fig. \ref{fig:ocr}.
 
