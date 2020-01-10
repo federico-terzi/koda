@@ -16,11 +16,17 @@
 \maketitle
 
 \begin{abstract}
-TODO
+This paper proposes a pipeline, KODA, suitable for keyword highlighting in document images. At its core, KODA uses a combination of edge detection, hough transform, OCR and warping to achieve the result. 
+We describe the custom, deep learning-based, approach for edge detection, motivated by the problems of traditional techniques and explaining the model training process, along with examples.
+We then describe the document detection and warping algorithms, as well as the keyword highlighting process.
 \end{abstract}
 
 \section{Introduction}
-TODO
+Document detection in images is a well-known problem, whose most common use-case is document scanning using mobile devices, achieving results comparable with commercial scanners. Although many apps already solve this problem, only a few offer the possibility to interactively search the document for specific keywords, a feature which could be beneficial to many people. For example, those with alimentary disorders could greatly benefit from an application which, from a simple restaurant menu or a product label picture, could show all the contained allergens conveniently.
+
+Our proposed pipeline, KODA, is specifically designed to detect documents from images, extract all the interesting keywords and, eventually, highlight them in the original image, so that the user can conveniently see them.
+
+The paper is organized as follows: the first section, Architecture, describes the general structure and components of KODA. In the Edge Detection section, starting from the limitations of traditional techniques, a deep learning-based approach is proposed, along with a throughout comparison. Thereafter, the Corners Detection section describes the document detection algorithm itself, exploiting Hough transformations. Then, in the Document analysis section, warping, OCR and highlighting techniques are described. Finally, the concluding remarks are drawn in the last section.
 
 \section{Architecture}
 
