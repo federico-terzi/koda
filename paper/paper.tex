@@ -18,10 +18,12 @@
 \maketitle
 
 \begin{abstract}
-This paper proposes a pipeline, KODA, suitable for keyword highlighting in document images. At its core, KODA uses a combination of edge detection, hough transform, OCR and warping to achieve the result. 
-We describe the custom, deep learning-based, approach for edge detection, motivated by the problems of traditional techniques and explaining the model training process, along with examples.
-We then describe the document detection and warping algorithms, as well as the keyword highlighting process.
+This paper proposes a pipeline, KODA, suitable for keyword highlighting in document images. At its core, KODA uses a combination of edge detection, hough transform, OCR and warping to achieve the result. The study describes the custom, deep learning-based, approach for edge detection, motivated by the problems of traditional techniques and explaining the model training process, along with examples. Moreover, document detection and warping algorithms are detailed, as well as the keyword highlighting process.
 \end{abstract}
+
+\begingroup\let\clearpage\relax
+\vspace{2cm}
+\tableofcontents \endgroup
 
 \section{Introduction}
 Document detection in images is a well-known problem, whose most common use-case is document scanning using mobile devices, achieving results comparable with commercial scanners. Although many apps already solve this problem, only a few offer the possibility to interactively search the document for specific keywords, a feature which could be beneficial to many people. For example, those with alimentary disorders could greatly benefit from an application which, from a simple restaurant menu or a product label picture, could show all the contained allergens conveniently.
@@ -34,19 +36,22 @@ The paper is organized as follows: the first section, Architecture, describes th
 
 KODA architecture was inspired by a Dropbox article \footnote{https://blogs.dropbox.com/tech/2016/08/fast-and-accurate-document-detection-for-scanning/} which defines the steps to solve a problem similar to the one this project is based on.
 
-The process is divided into two macro tasks (shown in Fig. \ref{fig:pipeline}): corners detection and document analysis. The formers takes as input a generic image containing a document and returns the 2D coordinates of its corners. The latter use the corners coordinates to warp the image, apply an OCR to read the document words and returns the original and warped image with the highlighted keywords specified by the user. Considering KODA as a black box, the user loads an image and, for each keyword specified, retrieves a copy of the image containing the highlighted word.
+The process is divided into two macro tasks (Fig. \ref{fig:pipeline}): image processing and keywords detection: The former detects a document from an image and retrieve all the contained words. The latter find user specified keywords, highlighting them in the document image.
 
 \begin{figure}[!htbp]
-	\includegraphics[width=\linewidth]{ipt.png}
-	\caption{Image processing tasks example. Note: edges detection returns a resized (256x256)}
-	\label{fig:imageprocessing}
-\end{figure}
-
-\begin{figure}[!htbp]
-	\includegraphics[width=\linewidth]{Pipeline.png}
+	\centering
+	\includegraphics[width=0.8\linewidth]{Pipeline.png}
 	\caption{KODA Pipeline scheme with sub-tasks. The computationally expensive processing is done once per input image, then the user can search for keywords and retrieves the output image multiple times repeatedly.}
 	\label{fig:pipeline}
 \end{figure}
+
+\begin{figure}[!htbp]
+	\includegraphics[width=\linewidth]{ipt.png}
+	\caption{Image processing tasks example. Note: edges detection returns a resized image (256x256)}
+	\label{fig:imageprocessing}
+\end{figure}
+
+
 
 
 
@@ -57,7 +62,7 @@ relies on edges to detect documents inside images. Therefore, in order to obtain
 good results, it is crucial to employ a solid \textit{edge detection} algorithm.
 
 
-\subsection{First Attempts with Canny}
+\subsection{First attempts with Canny}
 
 Our initial attempts to detect document edges involved the well known \textit{Canny edge detector} \footnote{J. Canny, "A Computational Approach to Edge Detection," in IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. PAMI-8, no. 6, pp. 679-698, Nov. 1986.
 	doi: 10.1109/TPAMI.1986.4767851}. 
@@ -83,7 +88,7 @@ despite producing good results in some scenarios, proved itself incapable of gen
 	\label{fig:canny_comparison}
 \end{figure}
 
-\subsection{Deep Learning Approach}
+\subsection{Deep Learning approach}
 
 In order to make the pipeline able to deal with real-world images, it is crucial to develop an
 edge detection mechanism capable of generalizing better in heterogeneous situations. 
@@ -138,6 +143,7 @@ Despite being simple, the proposed solution is to save the current model's resul
 	\label{fig:edge_comparison_epoch}
 \end{figure}
 
+\subsection{Comparison between the two approaches}
 
 An overview of the end result can be seen in Fig. \ref{fig:deep_comparison}, which also shows a comparison with the previous Canny-based approach.
 
@@ -161,17 +167,17 @@ All the operations described in the following section are computed with referenc
 
 OpenCV provides an interface for computing Hough lines \footnote{https://docs.opencv.org/2.4/doc/tutorials/imgproc/imgtrans/hough\_lines/hough\_lines.html} using polar coordinates (rho, theta); the problem is to calibrate the parameters and select the best lines retrieved. In order to remove unwanted noise in the edges image, an intensity threshold, which value was determined empirically (80), is applied before submitting it to the OpenCV interface. The threshold and the resolution interface parameters also were found empirically. The input images come from a natural environment with no control of lighting, so it can be expected that edges images intensity may heavily varies. For this reason, if no Hough lines are found, the task iteratively tries to reduce the threshold parameter by 10\% until enough lines are found or a maximum number of iterations is reached (default is 3). 
 
-Once a set of lines is found, a sub-task is responsible to select the four best ones, one per each document edge. This is accomplished exploiting the fact that the Hough lines returned by the OpenCV interface are ordered by confidence: the first four strongest ones are selected.
+Once a set of lines is found, a sub-task is responsible to select the four best ones, one per each document edge. This is accomplished exploiting the fact that the Hough lines returned by the OpenCV interface are ordered by confidence: the first four strongest ones are selected, as shown in Fig. \ref{fig:hough}.
 
 \begin{figure}[H]
 	\makebox[\textwidth][c]{\includegraphics[width=1.2\textwidth]{Hough.png}}
-	\caption{TODO}
+	\caption{Hough lines computation extracting the best one per each document edge.}
 	\label{fig:hough}
 \end{figure}
 
 \subsection{Computing corners}
 
-Once the four Hough lines corresponding to the document edges are found, computing the document corners means to correctly intersect the lines. They are ordered based on theta, so that parallel lines are near each other, then the intersections between alternated lines are computed. In particular, the intersection using polar is calculated as follow:
+Once the four Hough lines corresponding to the document edges are found, computing the document corners means to correctly intersect the lines. In order to distinguish lines that will be intersected from the others, they are sorted based on theta, so parallel lines are sequentially near to each other. In particular, the intersection is calculated as follow:
 
 \begin{equation*}
 	\begin{bmatrix} \cos(\sigma_1) & \sin(\sigma_1) \\ \cos(\sigma_2) & \sin(\sigma_2) \end{bmatrix}
@@ -183,13 +189,13 @@ Once the four Hough lines corresponding to the document edges are found, computi
 	Ax = b
 \end{equation*}
 
-The implementation to find the intersection relies on \footnote{ numpy.linalg.solve: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.solve.html} which may raises an exception if the A matrix is singular because the computation is not possible. Whenever this happens, a least square solution, if it converges, via \footnote{numpy.linalg.lstsq: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html} is provided.
+The implementation to find the intersection relies on \footnote{ \texttt{numpy.linalg.solve}: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.solve.html} which may raises an exception if the A matrix is singular because the computation is not possible. Whenever this happens, a least square solution, if it converges, via \footnote{\texttt{numpy.linalg.lstsq}: https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html} is provided.
 
 To maintain uniformity for the client API, the corners are sorted following the Cartesian quadrants and they are scaled up based on the original image size provided as input.
 
 \begin{figure}[H]
 	\makebox[\textwidth][c]{\includegraphics[width=1.2\textwidth]{computingcorners.png}}
-	\caption{TODO}
+	\caption{Computing corners as intersections of extracted Hough lines.}
 	\label{fig:computingcorners}
 \end{figure}
 
@@ -201,7 +207,7 @@ The first step of document analysis task is to warp the found paper within the i
 
 \begin{figure}[H]
 	\makebox[\textwidth][c]{\includegraphics[width=1\textwidth]{Warping.png}}
-	\caption{TODO}
+	\caption{Comparison between original and warped images.}
 	\label{fig:warping}
 \end{figure}
 
@@ -239,7 +245,7 @@ Where:
 
 However, the OCR library performs on the warped image, instead of the original one. For this reason, the overlay has to be warped back to the document shape as in the original image. This requirement is satisfied by applying a perspective transformation using the inverse of the perspective transform matrix used to find the warped image. 
 
-The KODA implementation (shown in Fig. \ref{fig:keywordhighliting}) relies on this concept, but actually transforms each bounding box instead of the entire final overlay. Transforming the warped image copy (final overlay) would leads to black pixels all over the areas the document is not present, so that adding to the original image results to darken areas outside the document. To maintain intact these areas, the highlights are drawn directly on the original image copy (not warped) after they are transformed correctly. Granted that further operations to avoid the darkened areas are possible, the KODA implementation was chosen because it does not introduce additional overhead.
+The KODA implementation (shown in Fig. \ref{fig:keywordhighliting}) relies on this concept, but actually transforms each bounding box instead of the entire final overlay. Transforming the warped image copy (final overlay) would lead to black pixels all over the areas where the document is not present: adding it to the orginal images results in darken areas outside the document. To avoid this problem, the highlights are drawn directly on the original image copy (not warped) after they are transformed correctly.
 
 \begin{figure}[H]
 	\makebox[\textwidth][c]{\includegraphics[width=1\textwidth]{kh.png}}
@@ -249,7 +255,7 @@ The KODA implementation (shown in Fig. \ref{fig:keywordhighliting}) relies on th
 
 \begin{figure}[H]
 	\makebox[\textwidth][c]{\includegraphics[width=1.5\textwidth]{Highlighting.png}}
-	\caption{ Examples of the keyword “on” highlighting. Note: the keyword is not searched as a perfect match, but as a substring of actual words. The highlight is applied to the entire word.}
+	\caption{ Examples of the keyword "on" highlighting. Note: the keyword is not searched as a perfect match, but as a substring of actual words. The highlight is applied to the entire word.}
 	\label{fig:keywordhighliting2}
 \end{figure}
 
